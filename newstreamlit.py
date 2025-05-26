@@ -17,7 +17,7 @@ def run_query(query):
     rows = cursor.fetchall()
     col_names = [desc[0] for desc in cursor.description]
     cursor.close()
-    conn.close()
+    #conn.close()
     return pd.DataFrame(rows,columns=col_names)
 
 st.sidebar.title("Navigation")
@@ -30,7 +30,7 @@ page = st.sidebar.radio("Go to",["Project Introduction","Competitions and Catego
 if page == "Project Introduction":
     st.title("SPORTS: Tennis Data Analysis")
     st.subheader("Streamlit App for Exploring Tennis data")
-    st.image('c:/Users/User/Desktop/guvi project1/tennis.jpg')
+    st.image('c:/Users/User/Desktop/guvi project1/Project1/tennis.jpg')
     st.write(""" 
              This project analysis Tennis data and gives information about categories,competitors,venues and competitions
              across different countries.
@@ -98,11 +98,60 @@ elif page == "Competitors and Rankings":
     st.write("query_result:")
     st.dataframe(query_result2)
 
+    q1 = "select name,country from competitors_table"
+    q2 = "select ct.name, rt.competitor_rank, rt.points from competitors_table as ct join competitor_rankings_table as rt on ct.competitor_id = rt.competitor_id"
+    df1 = pd.read_sql(q1,con=get_connection()) 
+    df2 = pd.read_sql(q2,con=get_connection()) 
+
+
+    st.title("Competitors per country")
+    #filter1: countries -multi-select
+    country_options = st.multiselect("Select countries:", df1['country'].unique())
+
+    if country_options:
+        filtered_df = df1[df1['country'].isin(country_options)]
+    else:
+        filtered_df = df1
+
+    st.dataframe(filtered_df)
+
+
+    #filter 2:ranks- slider
+    min_rank, max_rank= st.slider("select rank range",
+                              min_value = int(df2['competitor_rank'].min()),
+                              max_value = int(df2['competitor_rank'].max()),
+                              value = (int(df2['competitor_rank'].min()),
+                                       int(df2['competitor_rank'].max()))
+                              )
+    #filter 3: points range slider
+    min_points, max_points = st.slider("Select points range",
+    min_value = int(df2['points'].min()),
+    max_value = int(df2['points'].max()),
+        value = (
+            int(df2['points'].min()),
+            int (df2['points'].max())
+         ) )
+    filtered_df1 = df2[(df2['competitor_rank'] >= min_rank) & 
+                   (df2['competitor_rank'] <= max_rank) &
+                   (df2['points'] >= min_points) &
+                   (df2['points'] <= max_points)]
+
+    #filter 4: search by name
+    search_name = st.text_input("Search Competitor_name")
+
+    if search_name:
+        filtered_df1 = filtered_df1[filtered_df1['name'].str.contains(search_name,case=False)]
+
+
+    #display
+    st.subheader("filtered results")
+    st.dataframe(filtered_df1)
+
 # --------------------------------     page: 5 Creator Info  --------------------------------------------
-elif page == "Creator Info":
+else:
     st.title("Creator of this project")
     st.write("""
              **Developed by**: Aswini 
              **Skills**: Python,SQL,Streamlit,pandas
              """)
-    st.image('c:/Users/User/Desktop/guvi project1/tennis1.jpg')
+    st.image('c:/Users/User/Desktop/guvi project1/Project1/tennis1.jpg')
